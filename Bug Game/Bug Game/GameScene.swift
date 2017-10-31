@@ -95,7 +95,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate
                 print("player pressed!")
                 
                 Player.physicsBody?.applyImpulse(CGVector(dx: 0, dy: 90))
-                
+        
                 //Restart scene
             } else if self.atPoint(location) == self.label {
             print("text label was clicked")
@@ -142,7 +142,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate
     
     func scoreboard()
     {
-        label =  SKLabelNode(text: "Start Game")
+        label =  SKLabelNode(text: "Restart Game")
         
         label.position = CGPoint(x: 0, y: 0)
         label.fontSize = 45
@@ -164,7 +164,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate
         
         //Physics
         //HAVE A LOOK AT THE RADIUS TO WORK WITH THE FUCKING SPITBALL NOT DYING
-        Spitball.physicsBody = SKPhysicsBody(circleOfRadius: Enemy.size.width / 4.0)
+        Spitball.physicsBody = SKPhysicsBody(circleOfRadius: Spitball.size.width / 2)
         Spitball.physicsBody?.affectedByGravity = true
         Spitball.physicsBody?.isDynamic = true
         Spitball.physicsBody?.allowsRotation = false
@@ -173,20 +173,21 @@ class GameScene: SKScene, SKPhysicsContactDelegate
         Spitball.physicsBody?.collisionBitMask = PhysicsCategories.Enemy
         Spitball.physicsBody?.contactTestBitMask = PhysicsCategories.Enemy
         Spitball.name = "Spitball"
-        
+                
         self.addChild(Spitball)
     }
     
     func moveSpit()
     {
         //Add movement
+        var moveSpitball = SKAction.applyForce(CGVector(dx:40, dy:40), duration: 0.1)
         
-        //change movement script to something with physics in it so the spit falls down after some seconds
-        var moveSpitball = SKAction.applyImpulse(CGVector(dx: 150, dy: 200), duration: 0.1)
-
-        self.run(SKAction.wait(forDuration: 0.1)) {
-            moveSpitball = SKAction.applyImpulse(CGVector(dx: 0, dy: 200), duration: 0.1)
-        }
+        self.Spitball.run(
+            SKAction.sequence([
+                SKAction.wait(forDuration: 0.8),
+                SKAction.removeFromParent()
+                ])
+        )
         
         Spitball.run(moveSpitball)
     }
