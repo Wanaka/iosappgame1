@@ -33,9 +33,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate
         //Run everything
         runGround()
         runPlayer()
-        runEnemy()
-        runObstacles()
         animate()
+        
+        randomizeObstacles(delay: 3)
+        randomizeEnemies(delay: 1.0)
     }
     
     func didBegin(_ contact: SKPhysicsContact) //See if contact has occured
@@ -140,6 +141,38 @@ class GameScene: SKScene, SKPhysicsContactDelegate
         // Called before each frame is rendered
     }
     
+    //spawn obstacle randomly
+    func randomizeObstacles(delay: TimeInterval)
+    {
+        removeAction(forKey: "runObstacles")
+        
+        let delayAction = SKAction.wait(forDuration: delay)
+        let spawnAction = SKAction.run {
+            self.runObstacles()
+        }
+        
+        let sequenceAction = SKAction.sequence([delayAction, spawnAction])
+        let repeatAction = SKAction.repeatForever(sequenceAction)
+        
+        run(repeatAction, withKey:"runObstacles")
+    }
+    
+    //spawn enemies randomly
+    func randomizeEnemies(delay: TimeInterval)
+    {
+        removeAction(forKey: "runEnemy")
+        
+        let delayAction = SKAction.wait(forDuration: delay)
+        let spawnAction = SKAction.run {
+            self.runEnemy()
+        }
+        
+        let sequenceAction = SKAction.sequence([delayAction, spawnAction])
+        let repeatAction = SKAction.repeatForever(sequenceAction)
+        
+        run(repeatAction, withKey:"runEnemy")
+    }
+    
     func scoreboard()
     {
         label =  SKLabelNode(text: "Restart Game")
@@ -233,7 +266,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate
         Obstacle.name = "Obstacle"
         
         //Add movement
-        let moveObstacle = SKAction.moveTo(x: -1000, duration: 7)
+        let moveObstacle = SKAction.moveTo(x: -size.width - Obstacle.size.width, duration: 7)
+        
         Obstacle.run(moveObstacle)
         
         self.addChild(Obstacle)
@@ -250,8 +284,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate
         Enemy.zPosition = 1
         
         //Physics
-        
-        
         Enemy.physicsBody = SKPhysicsBody(circleOfRadius: Enemy.size.width / 2.0)
         Enemy.physicsBody?.affectedByGravity = true
         Enemy.physicsBody?.isDynamic = true
@@ -263,7 +295,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate
         Enemy.name = "Enemy"
         
         //Add movement
-        let moveEnemy = SKAction.moveTo(x: -1000, duration: 7)
+        let moveEnemy = SKAction.moveTo(x: -size.width - Obstacle.size.width, duration: 7)
         Enemy.run(moveEnemy)
         
         self.addChild(Enemy)
@@ -272,7 +304,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate
     func runHitPlayer()
     {
         //Remove all actions of the obstacle
-        Obstacle.removeAllActions()
+//        Obstacle.removeAllActions()
         Enemy.removeAllActions()
         
         //make rotation on Player and remove grounds physics
