@@ -33,10 +33,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate
         //Run everything
         runGround()
         runPlayer()
-        animate()
         
         randomizeObstacles(delay: 3)
-        randomizeEnemies(delay: 1.0)
+//        randomizeEnemies(delay: 1.0)
+        runEnemy()
     }
     
     func didBegin(_ contact: SKPhysicsContact) //See if contact has occured
@@ -61,11 +61,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate
         {
             print("Spitball hit")
             
-            Spitball.removeAllActions()
-            self.Spitball.physicsBody = nil
-            self.Spitball.removeFromParent()
-            
-            runHitEnemy()
+            self.runHitEnemy()
             self.Enemy.physicsBody = nil
             
             self.run(SKAction.wait(forDuration: 1)) {
@@ -97,6 +93,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate
                 
                 Player.physicsBody?.applyImpulse(CGVector(dx: 0, dy: 90))
         
+                
                 //Restart scene
             } else if self.atPoint(location) == self.label {
             print("text label was clicked")
@@ -126,15 +123,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate
         }
     }
     
-    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-    }
-    
-    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        
-    }
-    
-    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
-    }
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {}
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {}
+    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {}
     
     
     override func update(_ currentTime: TimeInterval) {
@@ -158,20 +149,21 @@ class GameScene: SKScene, SKPhysicsContactDelegate
     }
     
     //spawn enemies randomly
-    func randomizeEnemies(delay: TimeInterval)
-    {
-        removeAction(forKey: "runEnemy")
-        
-        let delayAction = SKAction.wait(forDuration: delay)
-        let spawnAction = SKAction.run {
-            self.runEnemy()
-        }
-        
-        let sequenceAction = SKAction.sequence([delayAction, spawnAction])
-        let repeatAction = SKAction.repeatForever(sequenceAction)
-        
-        run(repeatAction, withKey:"runEnemy")
-    }
+//    func randomizeEnemies(delay: TimeInterval)
+//    {//NEED TO GET A SOLUTION ON THIS PROBLEM WHERE SPITBALL CANT HIT ANYMORE WHEN I USE DELAY FUNCTION
+//        removeAction(forKey: "runEnemy")
+//
+//        let delayAction = SKAction.wait(forDuration: delay)
+//        let spawnAction = SKAction.run {
+//            self.runEnemy()
+//            self.animate()
+//        }
+//
+//        let sequenceAction = SKAction.sequence([delayAction, spawnAction])
+//        let repeatAction = SKAction.repeatForever(sequenceAction)
+//
+//        run(repeatAction, withKey:"runEnemy")
+//    }
     
     func scoreboard()
     {
@@ -213,8 +205,15 @@ class GameScene: SKScene, SKPhysicsContactDelegate
     func moveSpit()
     {
         //Add movement
-        var moveSpitball = SKAction.applyForce(CGVector(dx:40, dy:40), duration: 0.1)
         
+        
+        //START HEEREEE NEXT DEV SESSION. SEE IF SPITBALL DOESNT HIT BECAUSE I REMOVED THE APLLYIMPULSE...DONT THINK SO BUT TRY IT.
+        
+//        var moveSpitball = SKAction.applyImpulse(CGVector(dx:40, dy:40))
+        
+        
+        var moveSpitball = SKAction.applyForce(CGVector(dx:40, dy:40), duration: 0.1)
+
         self.Spitball.run(
             SKAction.sequence([
                 SKAction.wait(forDuration: 0.8),
@@ -275,30 +274,51 @@ class GameScene: SKScene, SKPhysicsContactDelegate
     
     func runEnemy()
     {
-        //Create Enemies
-        Enemy = SKSpriteNode(imageNamed: "enemymove_1.png")
+        let timer = SKAction.wait(forDuration: 3, withRange: 1)
         
-        //Scale and position
-        Enemy.setScale(0.4)
-        Enemy.position = CGPoint(x: 1000, y: self.frame.height / 2 - 300)
-        Enemy.zPosition = 1
+        let spawnNode = SKAction.run {
+            
+            //Create Enemies
+            self.Enemy = SKSpriteNode(imageNamed: "enemymove_1.png")
+            
+            //Scale and position
+            self.Enemy.setScale(0.4)
+            
+            
+            
+            //CHANGE THE SPAWNING POSITION HERE
+            let spawnLocation = CGPoint(x:Int(arc4random() % UInt32(self.frame.width + self.Enemy.size.width) ), y:Int(arc4random() %  UInt32(300)))
+            
+            self.Enemy.position = spawnLocation
+//            self.Enemy.position = CGPoint(x: 1000, y: self.frame.height / 2 - 300)
+            self.Enemy.zPosition = 1
+            
+            //Physics
+            self.Enemy.physicsBody = SKPhysicsBody(circleOfRadius: self.Enemy.size.width / 2.0)
+            self.Enemy.physicsBody?.affectedByGravity = true
+            self.Enemy.physicsBody?.isDynamic = true
+            self.Enemy.physicsBody?.allowsRotation = false
+            
+            self.Enemy.physicsBody?.categoryBitMask = PhysicsCategories.Enemy
+            self.Enemy.physicsBody?.collisionBitMask = PhysicsCategories.Player
+            self.Enemy.physicsBody?.contactTestBitMask = PhysicsCategories.Player
+            self.Enemy.name = "Enemy"
+            
+            //Add movement
+            let moveEnemy = SKAction.moveTo(x: (-self.size.width - self.frame.size.width), duration: 7)
+            self.Enemy.run(moveEnemy)
+            
+            self.addChild(self.Enemy)
+        }
         
-        //Physics
-        Enemy.physicsBody = SKPhysicsBody(circleOfRadius: Enemy.size.width / 2.0)
-        Enemy.physicsBody?.affectedByGravity = true
-        Enemy.physicsBody?.isDynamic = true
-        Enemy.physicsBody?.allowsRotation = false
+        let sequence = SKAction.sequence([timer, spawnNode])
         
-        Enemy.physicsBody?.categoryBitMask = PhysicsCategories.Enemy
-        Enemy.physicsBody?.collisionBitMask = PhysicsCategories.Player
-        Enemy.physicsBody?.contactTestBitMask = PhysicsCategories.Player
-        Enemy.name = "Enemy"
         
-        //Add movement
-        let moveEnemy = SKAction.moveTo(x: -size.width - Obstacle.size.width, duration: 7)
-        Enemy.run(moveEnemy)
+        self.run(SKAction.repeatForever(sequence) , withKey: "spawning") // run action with key so you can remove it later
+
         
-        self.addChild(Enemy)
+        
+        
     }
     
     func runHitPlayer()
